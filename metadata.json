@@ -1,0 +1,6 @@
+{
+  "name": "ASYS Intelligence Platform",
+  "description": "Plataforma empresarial de ASYS Technology SAS para prospección B2B, diagnóstico con IA, gestión de campañas y CRM comercial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
