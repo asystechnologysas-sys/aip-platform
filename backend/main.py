@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.core.logging import logger
 from backend.api.v1.router import api_router
+from core.database import engine 
+from models import prospecto    
+
+
+prospecto.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
