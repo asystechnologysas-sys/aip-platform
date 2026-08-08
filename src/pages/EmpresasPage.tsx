@@ -22,7 +22,7 @@ export const EmpresasPage: React.FC<{ onNavigate: (path: string) => void }> = ({
     const loadRealData = async () => {
       try {
         // Llamamos a tu API en Easypanel
-        const response = await fetch('https://api-flujo.asysdigital.com/');
+        const response = await fetch('https://aipplatformweb-backend.xn53ak.easypanel.host/api/v1/prospeccion/prospectos');
         const dataFromDB = await response.json();
 
         // Mapeamos los nombres (De base de datos a Frontend)
