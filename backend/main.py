@@ -2,8 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.api.v1.router import api_router
-from backend.core.database import engine
-from backend.models import prospecto 
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -20,13 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Crear tablas al iniciar
-prospecto.Base.metadata.create_all(bind=engine)
-
-# Cargar las rutas
+# Cargar las rutas (Ya no creamos tablas aquí porque ya existen)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 @app.get("/")
 async def root():
     return {"status": "online", "message": "ASYS Intelligence API is running"}
-
