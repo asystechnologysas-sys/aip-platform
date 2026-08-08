@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { Building2, Globe, MapPin, Users, Award, ExternalLink, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react'; // 1. Agregamos useEffect
+import { Building2, Globe, MapPin, Users, Award, ExternalLink, Plus, Loader2 } from 'lucide-react';
 import { Breadcrumb } from '../components/common/Breadcrumb';
 import { FilterBar } from '../components/common/FilterBar';
 import { DataTable } from '../components/common/DataTable';
 import { Badge } from '../components/common/Badge';
 import { MetricCard, CardContainer } from '../components/common/Card';
-import { MOCK_ENTERPRISES } from '../services/mockData';
 import { useFilterStore } from '../store/useFilterStore';
 import { EmpresaExpedienteModal } from '../components/empresas/EmpresaExpedienteModal';
 import { Empresa } from '../types';
@@ -13,8 +12,46 @@ import { Empresa } from '../types';
 export const EmpresasPage: React.FC<{ onNavigate: (path: string) => void }> = ({ onNavigate }) => {
   const { searchTerm, statusFilter, industryFilter } = useFilterStore();
   const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null);
+  
+  // --- NUEVO: Estado para guardar las empresas de la base de datos ---
+  const [enterprises, setEnterprises] = useState<Empresa[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredData = MOCK_ENTERPRISES.filter((item) => {
+  // --- NUEVO: Función para traer los datos del Backend ---
+  useEffect(() => {
+    const loadRealData = async () => {
+      try {
+        // Llamamos a tu API en Easypanel
+        const response = await fetch('https://api-flujo.asysdigital.com/');
+        const dataFromDB = await response.json();
+
+        // Mapeamos los nombres (De base de datos a Frontend)
+        const formattedData: Empresa[] = dataFromDB.map((item: any) => ({
+          id: item.id.toString(),
+          nit: item.telefono || 'S/N', // Usamos el tel como ID temporal o NIT
+          name: item.nombre,
+          industry: item.categoria || 'General',
+          employees: '1-10', // Dato por defecto
+          location: item.direccion || item.ciudad || 'Barranquilla',
+          score: Math.round(item.rating * 20) || 0, // Convertimos rating 0-5 a 0-100
+          status: item.estado === 'descubierto' ? 'Sin Analizar' : 'Auditado',
+          website: item.sitio_web || '#',
+          createdAt: item.created_at
+        }));
+
+        setEnterprises(formattedData);
+      } catch (error) {
+        console.error("Error cargando empresas reales:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRealData();
+  }, []);
+
+  // Ahora filtramos sobre 'enterprises' (los reales) en lugar de MOCK
+  const filteredData = enterprises.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.nit.includes(searchTerm) ||
@@ -34,7 +71,7 @@ export const EmpresasPage: React.FC<{ onNavigate: (path: string) => void }> = ({
         <div>
           <h1 className="text-xl font-bold tracking-tight">Directorio B2B & Expedientes Empresariales</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Haga clic en cualquier empresa para desplegar su Dossier Empresarial unificado (Auditorías, CRM, Contactos y Documentos).
+            {loading ? 'Cargando datos reales de la base de datos...' : 'Datos sincronizados con PostgreSQL.'}
           </p>
         </div>
         <button className="px-3 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition flex items-center gap-1.5">
@@ -44,94 +81,85 @@ export const EmpresasPage: React.FC<{ onNavigate: (path: string) => void }> = ({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <MetricCard title="Total Empresas" value="1,240" change="+14 hoy" isPositive={true} icon={Building2} />
-        <MetricCard title="Empresas Auditadas" value="380" change="+8.2%" isPositive={true} icon={Award} />
-        <MetricCard title="Scoring Promedio" value="78.4 / 100" change="+3.1" isPositive={true} icon={Globe} />
+        {/* Usamos el largo de nuestra lista real para las métricas */}
+        <MetricCard title="Total Empresas" value={enterprises.length.toString()} change="+1 real" isPositive={true} icon={Building2} />
+        <MetricCard title="Empresas Auditadas" value="1" change="0%" isPositive={true} icon={Award} />
+        <MetricCard title="Scoring Promedio" value="-- / 100" change="0" isPositive={true} icon={Globe} />
       </div>
 
       <FilterBar
         statusOptions={['TODOS', 'Sin Analizar', 'Auditado', 'En Prospección', 'Cliente']}
         industryOptions={['TODAS', 'Manufactura', 'Finanzas', 'Salud', 'Tecnología', 'Educación']}
-        onExport={() => alert('Exportando archivo CSV de empresas B2B...')}
+        onExport={() => alert('Exportando resultados reales...')}
         newActionLabel="Nueva Empresa Manual"
-        onNewAction={() => alert('Modal creación preparado para FastAPI / PostgreSQL')}
+        onNewAction={() => alert('Modal creación preparado')}
       />
 
       <CardContainer title="Catálogo de Empresas Registradas">
-        <DataTable
-          keyField="id"
-          data={filteredData}
-          onRowClick={(emp) => setSelectedEmpresa(emp)}
-          emptyTitle="No hay empresas registradas"
-          emptyDescription="Intente modificar los términos de búsqueda o ejecute una tarea de prospección con Apify."
-          columns={[
-            { key: 'nit', header: 'NIT / ID', render: (e) => <span className="font-mono text-xs">{e.nit}</span> },
-            {
-              key: 'name',
-              header: 'Nombre Empresa',
-              render: (e) => (
-                <div>
-                  <div className="font-bold text-slate-900 dark:text-slate-100 hover:text-blue-500 transition cursor-pointer">
-                    {e.name}
+        {loading ? (
+          <div className="p-20 flex flex-col items-center justify-center text-slate-500">
+             <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+             <p>Consultando PostgreSQL...</p>
+          </div>
+        ) : (
+          <DataTable
+            keyField="id"
+            data={filteredData}
+            onRowClick={(emp) => setSelectedEmpresa(emp)}
+            emptyTitle="No hay empresas registradas"
+            emptyDescription="Ejecute una búsqueda en el módulo de Prospección."
+            columns={[
+              { key: 'nit', header: 'NIT / ID', render: (e) => <span className="font-mono text-xs">{e.nit}</span> },
+              {
+                key: 'name',
+                header: 'Nombre Empresa',
+                render: (e) => (
+                  <div>
+                    <div className="font-bold text-slate-900 dark:text-slate-100 hover:text-blue-500 transition cursor-pointer">
+                      {e.name}
+                    </div>
+                    <a
+                      href={e.website}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(evt) => evt.stopPropagation()}
+                      className="text-[10px] text-blue-500 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>{e.website}</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
                   </div>
-                  <a
-                    href={e.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(evt) => evt.stopPropagation()}
-                    className="text-[10px] text-blue-500 hover:underline inline-flex items-center gap-1"
+                ),
+              },
+              { key: 'industry', header: 'Sector' },
+              { key: 'location', header: 'Ubicación' },
+              {
+                key: 'score',
+                header: 'Score IA',
+                render: (e) => (
+                  <span className="font-mono font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
+                    {e.score} pts
+                  </span>
+                ),
+              },
+              {
+                key: 'status',
+                header: 'Estado',
+                render: (e) => (
+                  <Badge
+                    variant={
+                      e.status === 'Cliente' ? 'emerald' : e.status === 'Auditado' ? 'blue' : 'slate'
+                    }
                   >
-                    <span>{e.website}</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                </div>
-              ),
-            },
-            { key: 'industry', header: 'Sector' },
-            { key: 'employees', header: 'Empleados' },
-            {
-              key: 'location',
-              header: 'Ubicación',
-              render: (e) => (
-                <div className="flex items-center gap-1 text-slate-500">
-                  <MapPin className="w-3 h-3 text-blue-500" />
-                  <span>{e.location}</span>
-                </div>
-              ),
-            },
-            {
-              key: 'score',
-              header: 'Score IA',
-              render: (e) => (
-                <span className="font-mono font-bold text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                  {e.score} pts
-                </span>
-              ),
-            },
-            {
-              key: 'status',
-              header: 'Estado',
-              render: (e) => (
-                <Badge
-                  variant={
-                    e.status === 'Cliente'
-                      ? 'emerald'
-                      : e.status === 'Auditado'
-                      ? 'blue'
-                      : e.status === 'En Prospección'
-                      ? 'purple'
-                      : 'slate'
-                  }
-                >
-                  {e.status}
-                </Badge>
-              ),
-            },
-          ]}
-        />
+                    {e.status}
+                  </Badge>
+                ),
+              },
+            ]}
+          />
+        )}
       </CardContainer>
 
-      {/* Corporate Dossier Modal */}
       {selectedEmpresa && (
         <EmpresaExpedienteModal
           empresa={selectedEmpresa}
