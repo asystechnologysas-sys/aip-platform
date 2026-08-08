@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from core.database import get_db
-from schemas.prospecto import ProspectoBulk
-from repositories.prospecto_repository import ProspectoRepository
+from backend.core.database import get_db # <-- Agregar 'backend.'
+from backend.schemas.prospecto import ProspectoBulk # <-- Agregar 'backend.'
+from backend.repositories.prospecto_repository import ProspectoRepository # <-- Agregar 'backend.'
 import httpx
 
 router = APIRouter()

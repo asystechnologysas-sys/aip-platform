@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from models.prospecto import Prospecto
-from schemas.prospecto import ProspectoCreate
+from backend.models.prospecto import Prospecto # <-- Agregar 'backend.'
+from backend.schemas.prospecto import ProspectoCreate # <-- Agregar 'backend.'
 from typing import List
 
 class ProspectoRepository:

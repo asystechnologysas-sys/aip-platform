@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, Integer, Float, DateTime, Text
-from core.database import Base # Asegúrate de que Base se importe de tu core
+from backend.core.database import Base # <-- Agregar 'backend.'
 from datetime import datetime
 
 class Prospecto(Base):
