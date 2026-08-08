@@ -6,11 +6,16 @@ from backend.repositories.prospecto_repository import ProspectoRepository # <-- 
 import httpx
 
 router = APIRouter()
+# En listar_prospectos
+@router.get("/prospectos")
+async def listar_prospectos(db: Session = Depends(get_db)):
+    repo = ProspectoRepository(db)
+    return await repo.get_all() # <-- ASEGÚRATE DE QUE TENGA EL 'await'
 
 # 1. Endpoint que React llama para iniciar búsqueda
 @router.post("/buscar")
 async def buscar_empresas(keyword: str, ciudad: str):
-    N8N_WEBHOOK_URL = "TU_URL_DE_N8N_AQUI" # Webhook de n8n
+    N8N_WEBHOOK_URL = "https://n8n-cv-n8n.xn53ak.easypanel.host/webhook/buscar-empresas" # Webhook de n8n
     
     async with httpx.AsyncClient() as client:
         # Disparamos n8n y no esperamos a que termine (n8n luego nos llamará de vuelta)
