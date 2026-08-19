@@ -49,25 +49,20 @@ export const EmpresasPage: React.FC<{ onNavigate: (path: string) => void }> = ({
 
   // Función para disparar la búsqueda desde el botón
   const handleImportar = async () => {
-    const keyword = prompt("¿Qué empresas quieres buscar? (ej: Barberias)");
-    const city = "Barranquilla";
+  const keyword = prompt("¿Qué empresas buscas? (ej: Restaurantes)");
+  if (!keyword) return;
 
-    if (!keyword) return;
+  const city = prompt("¿En qué ciudad?", "Barranquilla");
+  if (!city) return;
 
-    try {
-      const response = await fetch('https://aipplatformweb-backend.xn53ak.easypanel.host/api/v1/prospeccion/buscar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword: keyword, ciudad: city })
-      });
-
-      if (response.ok) {
-        alert("🚀 Búsqueda enviada a n8n. Refresca en un momento para ver los resultados.");
-      }
-    } catch (error) {
-      alert("Error al conectar con el servidor.");
-    }
-  };
+  await fetch('https://aipplatformweb-backend.xn53ak.easypanel.host/api/v1/prospeccion/buscar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ keyword: keyword, ciudad: city }) // Enviamos ambos
+  });
+  
+  alert("🚀 Búsqueda iniciada...");
+};
 
   const filteredData = enterprises.filter((item) => {
     const matchesSearch =
