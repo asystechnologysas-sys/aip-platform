@@ -6,7 +6,7 @@ from backend.repositories.prospecto_repository import ProspectoRepository # <-- 
 import httpx
 from pydantic import BaseModel
 
-class SearchRequest(BaseModel):
+class SearchSchema(BaseModel):
     keyword: str
     ciudad: str
 
@@ -19,16 +19,17 @@ async def listar_prospectos(db: Session = Depends(get_db)):
 
 # 1. Endpoint que React llama para iniciar búsqueda
 @router.post("/buscar")
-async def buscar_empresas(request: SearchRequest): # <--- Ahora usa el esquema
+async def buscar_empresas(data: SearchSchema): # <--- Ahora recibe 'data' como SearchSchema
+    # Esta es la URL de tu n8n (asegúrate de que sea la de Production)
     N8N_WEBHOOK_URL = "https://n8n-cv-n8n.xn53ak.easypanel.host/webhook/buscar-empresas"
     
     async with httpx.AsyncClient() as client:
         await client.post(N8N_WEBHOOK_URL, json={
-            "keyword": request.keyword,
-            "city": request.ciudad
+            "keyword": data.keyword,
+            "city": data.ciudad
         })
     
-    return {"status": "processing", "message": f"Buscando {request.keyword} en {request.ciudad}"}
+    return {"status": "processing", "message": f"Buscando {data.keyword} en {data.ciudad}"}
 
 # 2. Endpoint que n8n llama para guardar los resultados
 @router.post("/webhook-resultados")
