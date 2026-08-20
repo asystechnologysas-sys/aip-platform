@@ -23,7 +23,8 @@ async def listar_prospectos(db: AsyncSession = Depends(get_db)):
 @router.post("/buscar")
 async def buscar_empresas(data: SearchSchema):
     # Asegúrate de que esta sea la Production URL de n8n
-    N8N_WEBHOOK_URL = "https://n8n-cv-n8n.xn53ak.easypanel.host/webhook/buscar-empresas"
+    N8N_WEBHOOK_URL = "https://n8n-cv-n8n.xn53ak.easypanel.host/webhook-test/buscar-empresas"
+    
     
     async with httpx.AsyncClient() as client:
         try:
